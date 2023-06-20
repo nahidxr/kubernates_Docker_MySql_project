@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-webserver-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-webserver
+  template:
+    metadata:
+      labels:
+        app: my-webserver
+    spec:
+      containers:
+      - name: webserver
+        image: tashdidalam/docker-project-1:V1
+        env:
+        - name: MYSQL_HOST
+          value: my-mysql-service
+        - name: MYSQL_PORT
+          value: "3306"
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: webserver-persistent-storage
+          mountPath: /var/www/html
+      volumes:
+      - name: webserver-persistent-storage
+        persistentVolumeClaim:
+          claimName: my-web-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-webserver-service
+spec:
+  selector:
+    app: my-webserver
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    nodePort: 30090
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-mysql-service
+spec:
+  selector:
+    app: my-mysql
+  ports:
+  - protocol: TCP
+    port: 3306
+    targetPort: 3306
